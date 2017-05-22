@@ -164,4 +164,20 @@ public class CrateMetaDataUpgradeServiceTest extends SQLTransportIntegrationTest
             TestingHelpers.assertCrateVersion(row[1], null, Version.CURRENT);
         }
     }
+
+    @Test
+    public void testUpgradeBlobTablesWithoutMapping() throws Exception {
+        startUpNodeWithDataDir(
+            "/indices/data_home/cratedata_blobtable_without_mapping-node1.zip",
+            "/indices/data_home/cratedata_blobtable_without_mapping-node2.zip");
+        execute("select routing_hash_function, version " +
+                "from information_schema.tables where table_name = 'test_blob_without_mapping' " +
+                "order by table_name");
+        assertThat(response.rowCount(), is(1L));
+        assertThat(response.rows()[0][0], is(IndexMappings.DEFAULT_ROUTING_HASH_FUNCTION_PRETTY_NAME));
+        TestingHelpers.assertCrateVersion(response.rows()[0][1], null, Version.CURRENT);
+
+        execute("show tables");
+        assertThat(TestingHelpers.printedTable(response.rows()), is("test_blob_without_mapping\n"));
+    }
 }
