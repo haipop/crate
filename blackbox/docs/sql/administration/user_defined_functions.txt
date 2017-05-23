@@ -14,8 +14,8 @@ User Defined Functions
 
 
 
-CREATE OR REPLACE
------------------
+``CREATE OR REPLACE``
+---------------------
 
 CrateDB supports user-defined functions. See :ref:`ref-create-function`
 for a full syntax description.
@@ -114,7 +114,7 @@ function must strictly correspond to its argument data types.
     if the cast is not successful.
 
 
-OVERLOADING
+Overloading
 -----------
 
 Within a specific schema, you can overload functions by defining two functions with the
@@ -145,13 +145,13 @@ This would overload our ``multiply`` function with more arguments::
 .. note::
 
     It is considered bad practice to create functions that have the same name
-    as the CrateDB built-in functions. 
-    
+    as the CrateDB built-in functions.
+
     If you call a function without a schema
     name, CrateDB will look it up in the built-in functions first and only then
     in the user-defined functions with the schema of the current session (see
-    :ref:`conf-session-settings`). 
-    
+    :ref:`conf-session-settings`).
+
     Therefore a built-in function with the same
     name as a user-defined function will hide the latter. However, such
     functions can still be called if the schema name is explicitly provided.
@@ -167,8 +167,8 @@ Determinism
     values, because CrateDB might cache the returned values and reuse the value
     if the function is called multiple times with the same arguments.
 
-DROP FUNCTION
--------------
+``DROP FUNCTION``
+-----------------
 
 Functions can be dropped like this::
 
@@ -215,7 +215,7 @@ normally accessible with a web browser (e.g. ``window``, ``console`` and so on)
 are are not available.
 
 Supported Types
-^^^^^^^^^^^^^^^
+```````````````
 
 JavaScript functions can handle all CrateDB data types. However, for some
 return types the function output must correspond to the certain

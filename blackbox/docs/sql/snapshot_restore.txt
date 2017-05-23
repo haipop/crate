@@ -1,7 +1,7 @@
 .. highlight:: psql
 .. _snapshot-restore:
 
-Backup with Snapshot and Restore
+Backup With Snapshot and Restore
 ================================
 
 Snapshot
@@ -226,8 +226,8 @@ repository in the cluster state, so it's not accessible any more.
 
 .. _snapshot-restore_hfs-requirements:
 
-Requirements for using repositories of type 'hdfs'
---------------------------------------------------
+Requirements for Using HDFS Repositories
+----------------------------------------
 
 Crate supports repositories of type
 :ref:`ref-create-repository-types-hdfs` type by default, but required
