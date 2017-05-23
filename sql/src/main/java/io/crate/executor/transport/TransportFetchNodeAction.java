@@ -23,6 +23,7 @@ package io.crate.executor.transport;
 
 import com.carrotsearch.hppc.IntObjectMap;
 import io.crate.Streamer;
+import io.crate.breaker.RamAccountingContext;
 import io.crate.jobs.JobContextService;
 import io.crate.operation.collect.stats.JobsLogs;
 import io.crate.operation.fetch.NodeFetchOperation;
@@ -70,9 +71,10 @@ public class TransportFetchNodeAction implements NodeAction<NodeFetchRequest, No
     public void execute(String targetNode,
                         final IntObjectMap<Streamer[]> streamers,
                         final NodeFetchRequest request,
+                        RamAccountingContext ramAccountingContext,
                         ActionListener<NodeFetchResponse> listener) {
         transports.sendRequest(TRANSPORT_ACTION, targetNode, request, listener,
-            new ActionListenerResponseHandler<>(listener, () -> NodeFetchResponse.forReceiveing(streamers)));
+            new ActionListenerResponseHandler<>(listener, () -> NodeFetchResponse.forReceiveing(streamers, ramAccountingContext)));
     }
 
     @Override

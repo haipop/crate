@@ -22,34 +22,64 @@
 
 package io.crate.planner.projection;
 
+import io.crate.analyze.symbol.Literal;
+import io.crate.analyze.symbol.Symbol;
 import io.crate.operation.Paging;
 import org.junit.Test;
 
-import java.util.Collections;
-import java.util.TreeMap;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 public class FetchProjectionTest {
 
-    @Test
-    public void testFetchSizeHasUpperBound() throws Exception {
-        assertThat(getFetchProjection(0).getFetchSize(), is(Paging.PAGE_SIZE));
+    private List<Symbol> tenLongOutputs = Arrays.asList(
+        Literal.of(10L),
+        Literal.of(20L),
+        Literal.of(30L),
+        Literal.of(40L),
+        Literal.of(50L),
+        Literal.of(60L),
+        Literal.of(70L),
+        Literal.of(80L),
+        Literal.of(90L),
+        Literal.of(100L)
+    );
 
-        assertThat(getFetchProjection(Integer.MAX_VALUE).getFetchSize(), is(Paging.PAGE_SIZE));
+    @Test
+    public void testFetchSizeCalcWithTinyHeap() throws Exception {
+        long tinyHeap = 56 * 1024 * 1024;
+        int fetchSize = FetchProjection.calculateFetchSize(tinyHeap, 0, 1, tenLongOutputs);
+        assertThat(fetchSize, is(24272));
     }
 
+    @Test
+    public void testFetchSizeCalcWithLowHeap() throws Exception {
+        long lowHeap = 256 * 1024 * 1024;
+        int fetchSize = FetchProjection.calculateFetchSize(lowHeap, 0, 1, tenLongOutputs);
+        assertThat(fetchSize, is(24272));
+    }
 
-    private static FetchProjection getFetchProjection(int fetchSize) {
-        return new FetchProjection(
-                1,
-                fetchSize,
-                Collections.emptyMap(),
-                Collections.emptyList(),
-                Collections.emptyMap(),
-                new TreeMap<>(),
-                Collections.emptyMap()
-            );
+    @Test
+    public void testFetchSizeCalcWithNormalHeap() throws Exception {
+        long normalHeap = 2048L * 1024 * 1024;
+        int fetchSize = FetchProjection.calculateFetchSize(normalHeap, 0, 1, tenLongOutputs);
+        assertThat(fetchSize, is(Paging.PAGE_SIZE));
+    }
+
+    @Test
+    public void testFetchSizeCalcWithLargeHeap() throws Exception {
+        long largeHeap = 28L * 1024 * 1024 * 1024;
+        int fetchSize = FetchProjection.calculateFetchSize(largeHeap, 0, 1, tenLongOutputs);
+        assertThat(fetchSize, is(Paging.PAGE_SIZE));
+    }
+
+    @Test
+    public void testFetchSizeWithLargeUserSuppliedFetchSize() throws Exception {
+        long normalHeap = 2048L * 1024 * 1024;
+        int fetchSize = FetchProjection.calculateFetchSize(normalHeap, 10_000_000, 1, tenLongOutputs);
+        assertThat(fetchSize, is(Paging.PAGE_SIZE));
     }
 }

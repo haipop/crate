@@ -29,7 +29,10 @@ import io.crate.metadata.TableIdent;
 import io.crate.operation.Paging;
 import io.crate.planner.ExplainLeaf;
 import io.crate.planner.node.fetch.FetchSource;
+import io.crate.types.DataType;
+import io.crate.types.FixedWidthType;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.monitor.jvm.JvmInfo;
 
 import java.io.IOException;
 import java.util.List;
@@ -55,12 +58,56 @@ public class FetchProjection extends Projection {
                            TreeMap<Integer, String> readerIndices,
                            Map<String, TableIdent> indicesToIdents) {
         this.collectPhaseId = collectPhaseId;
-        this.fetchSize = fetchSize == 0 ? Paging.PAGE_SIZE : Math.min(fetchSize, Paging.PAGE_SIZE);
+        this.fetchSize = calculateFetchSize(
+            JvmInfo.jvmInfo().getConfiguredMaxHeapSize(),fetchSize, fetchSources.size(), outputSymbols);
         this.fetchSources = fetchSources;
         this.outputSymbols = outputSymbols;
         this.nodeReaders = nodeReaders;
         this.readerIndices = readerIndices;
         this.indicesToIdents = indicesToIdents;
+    }
+
+    /**
+     * Calculate a fetchSize that is not too large.
+     * The pre-fetch AND the post-fetch values must fit into memory
+     */
+    static int calculateFetchSize(long maxHeapInBytes, int fetchSize, int numSources, List<Symbol> outputSymbols) {
+        /*
+         *
+         * fetchIds are Long (~24 bytes)
+         * 16 Bytes are accounted for the container type (object array)
+         */
+        long expectedSizePerPreFetchRow = 16 + numSources * 24;
+        long expectedSizePerFetchResultRow = expectedRowSize(outputSymbols);
+        double bytesAvailableForFetch = Math.max(
+            // expect minimum 5MB to be available for fetch, even if the max heap is tiny
+            5 * 1024 * 1024,
+
+            // subtract 150mb as "base-footprint", this causes lower fetchSizes on low-heap machines
+            // but doesn't really influence the fetchSize on machines with a lot of heap
+            (maxHeapInBytes * 0.60) - (150 * 1024 * 1024));
+
+        long maxFetchSize = (long) bytesAvailableForFetch / (expectedSizePerPreFetchRow + expectedSizePerFetchResultRow);
+        if (maxFetchSize > Paging.PAGE_SIZE) {
+            return Paging.PAGE_SIZE;
+        }
+        if (fetchSize == 0) {
+            return Math.max(1000, (int) maxFetchSize);
+        }
+        return Math.min(fetchSize, (int) maxFetchSize);
+    }
+
+    private static long expectedRowSize(List<Symbol> outputSymbols) {
+        long size = 16;
+        for (int i = 0; i < outputSymbols.size(); i++) {
+            DataType dataType = outputSymbols.get(i).valueType();
+            if (dataType instanceof FixedWidthType) {
+                size += ((FixedWidthType) dataType).fixedSize();
+            } else {
+                size += 1000L; // random large value; if in doubt we want to have a smaller but safe fetchSize
+            }
+        }
+        return size;
     }
 
     public int collectPhaseId() {
@@ -134,7 +181,8 @@ public class FetchProjection extends Projection {
     public Map<String, Object> mapRepresentation() {
         return ImmutableMap.of(
             "type", "Fetch",
-            "outputs", ExplainLeaf.printList(outputSymbols)
+            "outputs", ExplainLeaf.printList(outputSymbols),
+            "fetchSize", fetchSize
         );
     }
 }

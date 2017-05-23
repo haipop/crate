@@ -79,6 +79,7 @@ public class NodeFetchOperation {
                 streamers,
                 fetchContext.searcher(readerId),
                 indexService.fieldData(),
+                fetchContext.ramAccountingContext(),
                 readerId
             );
         }

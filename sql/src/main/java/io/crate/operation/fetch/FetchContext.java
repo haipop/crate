@@ -25,6 +25,7 @@ import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import io.crate.action.job.SharedShardContext;
 import io.crate.action.job.SharedShardContexts;
+import io.crate.breaker.RamAccountingContext;
 import io.crate.jobs.AbstractExecutionSubContext;
 import io.crate.metadata.PartitionName;
 import io.crate.metadata.Reference;
@@ -55,6 +56,7 @@ public class FetchContext extends AbstractExecutionSubContext {
     private final SharedShardContexts sharedShardContexts;
     private final TreeMap<Integer, TableIdent> tableIdents = new TreeMap<>();
     private final MetaData metaData;
+    private final RamAccountingContext ramAccountingContext;
     private final Iterable<? extends Routing> routingIterable;
     private final Map<TableIdent, Collection<Reference>> toFetch;
     private final AtomicBoolean isKilled = new AtomicBoolean(false);
@@ -63,12 +65,14 @@ public class FetchContext extends AbstractExecutionSubContext {
                         String localNodeId,
                         SharedShardContexts sharedShardContexts,
                         MetaData metaData,
+                        RamAccountingContext ramAccountingContext,
                         Iterable<? extends Routing> routingIterable) {
         super(phase.phaseId(), LOGGER);
         this.phase = phase;
         this.localNodeId = localNodeId;
         this.sharedShardContexts = sharedShardContexts;
         this.metaData = metaData;
+        this.ramAccountingContext = ramAccountingContext;
         this.routingIterable = routingIterable;
         this.toFetch = new HashMap<>(phase.tableIndices().size());
     }
@@ -164,6 +168,7 @@ public class FetchContext extends AbstractExecutionSubContext {
         for (IntObjectCursor<Engine.Searcher> cursor : searchers) {
             cursor.value.close();
         }
+        ramAccountingContext.close();
     }
 
     @Override
@@ -200,5 +205,9 @@ public class FetchContext extends AbstractExecutionSubContext {
                "phase=" + phase.phaseId() +
                ", searchers=" + Arrays.toString(searchers.keys) +
                '}';
+    }
+
+    public RamAccountingContext ramAccountingContext() {
+        return ramAccountingContext;
     }
 }
