@@ -590,7 +590,6 @@ public class ContextPreparer extends AbstractComponent {
                 localNodeId,
                 context.sharedShardContexts,
                 clusterService.state().metaData(),
-                RamAccountingContext.forExecutionPhase(circuitBreaker, phase),
                 routings));
             return true;
         }

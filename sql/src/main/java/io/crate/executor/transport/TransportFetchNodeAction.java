@@ -23,6 +23,7 @@ package io.crate.executor.transport;
 
 import com.carrotsearch.hppc.IntObjectMap;
 import io.crate.Streamer;
+import io.crate.breaker.CrateCircuitBreakerService;
 import io.crate.breaker.RamAccountingContext;
 import io.crate.jobs.JobContextService;
 import io.crate.operation.collect.stats.JobsLogs;
@@ -50,9 +51,15 @@ public class TransportFetchNodeAction implements NodeAction<NodeFetchRequest, No
                                     Transports transports,
                                     ThreadPool threadPool,
                                     JobsLogs jobsLogs,
-                                    JobContextService jobContextService) {
+                                    JobContextService jobContextService,
+                                    CrateCircuitBreakerService circuitBreakerService) {
         this.transports = transports;
-        this.nodeFetchOperation = new NodeFetchOperation(threadPool.executor(ThreadPool.Names.SEARCH), jobsLogs, jobContextService);
+        this.nodeFetchOperation = new NodeFetchOperation(
+            threadPool.executor(ThreadPool.Names.SEARCH),
+            jobsLogs,
+            jobContextService,
+            circuitBreakerService.getBreaker(CrateCircuitBreakerService.QUERY)
+        );
 
         transportService.registerRequestHandler(
             TRANSPORT_ACTION,

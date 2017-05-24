@@ -52,14 +52,14 @@ public class FetchProjectionTest {
     public void testFetchSizeCalcWithTinyHeap() throws Exception {
         long tinyHeap = 56 * 1024 * 1024;
         int fetchSize = FetchProjection.calculateFetchSize(tinyHeap, 0, 1, tenLongOutputs);
-        assertThat(fetchSize, is(24272));
+        assertThat(fetchSize, is(4854));
     }
 
     @Test
     public void testFetchSizeCalcWithLowHeap() throws Exception {
         long lowHeap = 256 * 1024 * 1024;
         int fetchSize = FetchProjection.calculateFetchSize(lowHeap, 0, 1, tenLongOutputs);
-        assertThat(fetchSize, is(24272));
+        assertThat(fetchSize, is(170879));
     }
 
     @Test

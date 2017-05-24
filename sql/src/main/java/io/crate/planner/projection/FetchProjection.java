@@ -79,13 +79,13 @@ public class FetchProjection extends Projection {
          */
         long expectedSizePerPreFetchRow = 16 + numSources * 24;
         long expectedSizePerFetchResultRow = expectedRowSize(outputSymbols);
+        // subtract a "base-footprint", this causes lower fetchSizes on low-heap machines
+        // but doesn't really influence the fetchSize on machines with a lot of heap
+        int baseFootprintInMB = 80;
         double bytesAvailableForFetch = Math.max(
-            // expect minimum 5MB to be available for fetch, even if the max heap is tiny
-            5 * 1024 * 1024,
-
-            // subtract 150mb as "base-footprint", this causes lower fetchSizes on low-heap machines
-            // but doesn't really influence the fetchSize on machines with a lot of heap
-            (maxHeapInBytes * 0.60) - (150 * 1024 * 1024));
+            // expect minimum 1MB to be available for fetch, even if the max heap is tiny
+            1024 * 1024,
+            (maxHeapInBytes * 0.45) - (baseFootprintInMB * 1024 * 1024));
 
         long maxFetchSize = (long) bytesAvailableForFetch / (expectedSizePerPreFetchRow + expectedSizePerFetchResultRow);
         if (maxFetchSize > Paging.PAGE_SIZE) {

@@ -24,7 +24,6 @@ package io.crate.operation.fetch;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import io.crate.action.job.SharedShardContexts;
-import io.crate.breaker.RamAccountingContext;
 import io.crate.core.collections.TreeMapBuilder;
 import io.crate.metadata.ColumnIdent;
 import io.crate.metadata.Routing;
@@ -36,7 +35,6 @@ import io.crate.types.DataTypes;
 import org.elasticsearch.Version;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
-import org.elasticsearch.common.breaker.NoopCircuitBreaker;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.indices.IndicesService;
 import org.hamcrest.Matchers;
@@ -54,8 +52,6 @@ import static org.mockito.Mockito.mock;
 
 public class FetchContextTest extends CrateDummyClusterServiceUnitTest {
 
-    private RamAccountingContext ramAccountingContext = new RamAccountingContext("dummy", new NoopCircuitBreaker("dummy"));
-
     @Test
     public void testGetIndexServiceForInvalidReaderId() throws Exception {
         final FetchContext context = new FetchContext(
@@ -68,7 +64,6 @@ public class FetchContextTest extends CrateDummyClusterServiceUnitTest {
             "dummy",
             new SharedShardContexts(mock(IndicesService.class)),
             clusterService.state().getMetaData(),
-            ramAccountingContext,
             Collections.emptyList());
 
         expectedException.expect(IllegalArgumentException.class);
@@ -107,7 +102,6 @@ public class FetchContextTest extends CrateDummyClusterServiceUnitTest {
             "dummy",
             new SharedShardContexts(mock(IndicesService.class, RETURNS_MOCKS)),
             metaData,
-            ramAccountingContext,
             ImmutableList.of(routing));
 
         context.prepare();
