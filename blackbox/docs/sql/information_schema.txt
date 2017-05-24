@@ -150,23 +150,15 @@ You can even query this tables' own columns (attention: this might lead to infin
   position.
 
 
-A full list of all available columns are given below:
+The following columns according to the SQL99 standard are available:
 
- * :ref:`table_catalog <table-catalog>`
-
-.. _table-catalog:
-
-Table Catalog
--------------
-
-    cr> select table_catalog from information_schema.columns;
-
-    +-----------------------...-+
-    | table_catalog             |
-    +-----------------------...-+
-    | partitioned_table         |
-    +-----------------------...-+
-    SELECT 5 rows in set (... sec)
++------------------+---------------------------------------------------------------+
+| Name             | Data Type        | Description                                |
++==================+===============================================================+
+| ``table_catalog``| sql_identifier   | Database name containing the current table |
++------------------+---------------------------------------------------------------+
+| ``table_schema`` | sql_identifier   | Schema name containing the current table   |
++------------------+---------------------------------------------------------------+
 
 
 Table Constraints
