@@ -10,6 +10,9 @@ dependencies {
     implementation "io.netty:netty-buffer:${versions.netty4}"
     implementation "io.netty:netty-codec-http:${versions.netty4}"
     implementation "com.google.code.findbugs:jsr305:${versions.jsr305}"
+    implementation "com.google.guava:guava:${versions.guava}"
+    implementation "org.apache.commons:commons-lang3:${versions.commonslang3}"
+    implementation "commons-collections:commons-collections:${versions.commonscollections}"
     testImplementation project(':integration-testing')
     testImplementation "org.apache.httpcomponents:httpclient:${versions.httpclient}"
 }

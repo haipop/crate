@@ -25,12 +25,6 @@ include 'es',
         'app',
         'blackbox',
         'ssl',
-        'enterprise:jmx-monitoring',
-        'enterprise:lang-js',
-        'enterprise:users',
-        'enterprise:ssl-impl',
-        'enterprise:functions',
-        'enterprise:licensing',
         'http',
         'benchmarks'
 

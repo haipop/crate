@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static io.crate.protocols.http.Headers.isAcceptJson;
@@ -80,6 +81,9 @@ public class MainAndStaticFileHandler extends SimpleChannelInboundHandler<FullHt
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws Exception {
+        HttpHeaders headers = msg.headers();
+        Map<String, String> cookies = HttpUtils.buildCookies(headers.get("Cookie"));
+        System.out.println(cookies);
         switch (msg.uri().trim().toLowerCase(Locale.ENGLISH)) {
             case "/admin":
             case "/_plugin/crate-admin":

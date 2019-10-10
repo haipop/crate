@@ -49,12 +49,6 @@ dependencies {
         exclude group: 'org.apache.xbean', module: 'xbean-asm-util'
     }
 
-    // include the enterprise module in classpath to be able to use it with Crate launched from within intellij
-    runtime project(':enterprise:users')
-    runtime project(':enterprise:ssl-impl')
-    runtime project(':enterprise:functions')
-    runtime project(':enterprise:licensing')
-
     testCompile project(':integration-testing')
     testCompile project(':http')
     testCompile project(path: ':sql', configuration: 'testOutput')
@@ -268,12 +262,10 @@ distributions {
             into("lib") {
                 from("oss_modules")
             }
-            into("lib") {
-                from("enterprise")
-            }
             into('plugins') {
                 from('plugins') {
                     includeEmptyDirs = true
+                    exclude 'enterprise'
                 }
             }
             into('lib/site') {
@@ -312,31 +304,10 @@ jar {
     from fileTree(buildDir).matching { include 'META-INF/services/*' }
 }
 
-task collectEnterpriseModules(
-    dependsOn: [':enterprise:users:jar',
-                ':enterprise:ssl-impl:jar',
-                ':enterprise:licensing:jar']) {
-    // this task collects the enterprise module jar into a single folder
-    // named enterprise from which the files are taken for the installDist task
-    doLast {
-        copy {
-            from(project(':enterprise:users').tasks.jar.archivePath)
-            from(project(':enterprise:ssl-impl').tasks.jar.archivePath)
-            from(project(':enterprise:licensing').tasks.jar.archivePath)
-            into 'enterprise'
-        }
-    }
-}
-collectEnterpriseModules.outputs.dir('enterprise')
-
-
 task downloadPlugins(
     dependsOn: ['downloadAdminUI',
                 ':es:es-repository-hdfs:jar',
-                ':azure-discovery:jar',
-                ':enterprise:jmx-monitoring:jar',
-                ':enterprise:lang-js:jar',
-                ':enterprise:functions:jar']) {
+                ':azure-discovery:jar']) {
     doLast {
         // copy es-repository-hdfs plugin
         copy {
@@ -359,19 +330,6 @@ task downloadPlugins(
         copy {
             from("${buildDir}/crate-admin/")
             into 'adminui'
-        }
-        copy {
-            from(project(':enterprise:jmx-monitoring').tasks.jar.archivePath)
-            into 'plugins/enterprise/jmx-monitoring'
-        }
-        copy {
-            from(project(':enterprise:lang-js').tasks.jar.archivePath)
-            from(project(':enterprise:lang-js').buildDir.path + '/tmp/plugin-descriptor.properties')
-            into 'plugins/enterprise/lang-js'
-        }
-        copy {
-            from(project(':enterprise:functions').tasks.jar.archivePath)
-            into 'plugins/enterprise/functions'
         }
     }
 }
@@ -400,7 +358,7 @@ task downloadAdminUI {
 }
 
 
-processResources.dependsOn(downloadPlugins, collectEnterpriseModules)
+processResources.dependsOn(downloadPlugins)
 
 task(runDebug, dependsOn: 'classes', type: JavaExec) {
     main = 'io.crate.bootstrap.CrateDB'
@@ -433,8 +391,7 @@ test {
 }
 
 
-clean.dependsOn(['cleanDownloadPlugins',
-                 'cleanCollectEnterpriseModules'])
+clean.dependsOn(['cleanDownloadPlugins'])
 
 
 def extractTopfolder(File src, String trg) {
